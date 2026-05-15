@@ -33,3 +33,19 @@ data class FollowedLiveRoom(
     val uname: String,
     val title: String
 )
+
+data class LiveRoomItem(
+    val roomId: Long,
+    val uname: String,
+    val title: String
+)
+
+data class LiveArea(
+    val parentId: Long,
+    val areaId: Long,
+    val parentName: String,
+    val areaName: String
+) {
+    val displayName: String
+        get() = "$parentName / $areaName"
+}

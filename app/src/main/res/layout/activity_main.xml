@@ -50,7 +50,7 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/followPanel"
+        android:id="@+id/homePanel"
         android:layout_width="620dp"
         android:layout_height="match_parent"
         android:layout_gravity="center"
@@ -64,13 +64,37 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
+            <Button
+                android:id="@+id/followModeButton"
+                android:layout_width="82dp"
+                android:layout_height="44dp"
+                android:text="关注" />
+
+            <Button
+                android:id="@+id/categoryModeButton"
+                android:layout_width="82dp"
+                android:layout_height="44dp"
+                android:layout_marginLeft="8dp"
+                android:text="分类" />
+
+            <Button
+                android:id="@+id/searchModeButton"
+                android:layout_width="82dp"
+                android:layout_height="44dp"
+                android:layout_marginLeft="8dp"
+                android:text="搜索" />
+
             <TextView
+                android:id="@+id/homeTitle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginLeft="12dp"
                 android:layout_weight="1"
+                android:ellipsize="end"
+                android:singleLine="true"
                 android:text="关注直播"
                 android:textColor="@color/text_primary"
-                android:textSize="22sp" />
+                android:textSize="20sp" />
 
             <Button
                 android:id="@+id/manualRoomButton"
@@ -79,26 +103,54 @@
                 android:text="房间号" />
 
             <Button
-                android:id="@+id/reloadFollowButton"
+                android:id="@+id/reloadHomeButton"
                 android:layout_width="88dp"
                 android:layout_height="44dp"
                 android:layout_marginLeft="8dp"
                 android:text="刷新" />
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/searchBar"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <EditText
+                android:id="@+id/searchInput"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:hint="搜索直播间或主播"
+                android:singleLine="true"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_secondary"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/searchSubmitButton"
+                android:layout_width="88dp"
+                android:layout_height="44dp"
+                android:layout_marginLeft="8dp"
+                android:text="搜索" />
+        </LinearLayout>
+
         <TextView
-            android:id="@+id/followEmptyText"
+            android:id="@+id/homeEmptyText"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
             android:gravity="center"
-            android:text="暂无正在直播的关注主播"
+            android:text="暂无内容"
             android:textColor="@color/text_secondary"
             android:textSize="18sp"
             android:visibility="gone" />
 
         <ListView
-            android:id="@+id/followList"
+            android:id="@+id/homeList"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_marginTop="8dp"

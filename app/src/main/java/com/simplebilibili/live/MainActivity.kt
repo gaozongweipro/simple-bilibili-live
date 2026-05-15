@@ -21,7 +21,8 @@ import com.google.zxing.MultiFormatWriter
 import com.simplebilibili.live.auth.AuthRepository
 import com.simplebilibili.live.auth.QrLoginStatus
 import com.simplebilibili.live.biliapi.BiliApiClient
-import com.simplebilibili.live.biliapi.FollowedLiveRoom
+import com.simplebilibili.live.biliapi.LiveArea
+import com.simplebilibili.live.biliapi.LiveRoomItem
 import com.simplebilibili.live.biliapi.LiveStatus
 import com.simplebilibili.live.player.AspectRatioSurfaceView
 import com.simplebilibili.live.net.HttpClientFactory
@@ -37,9 +38,12 @@ class MainActivity : Activity() {
     private lateinit var playerSurface: AspectRatioSurfaceView
     private lateinit var loadingText: TextView
     private lateinit var loginPanel: LinearLayout
-    private lateinit var followPanel: LinearLayout
-    private lateinit var followList: ListView
-    private lateinit var followEmptyText: TextView
+    private lateinit var homePanel: LinearLayout
+    private lateinit var homeTitle: TextView
+    private lateinit var homeList: ListView
+    private lateinit var homeEmptyText: TextView
+    private lateinit var searchBar: LinearLayout
+    private lateinit var searchInput: EditText
     private lateinit var roomPanel: LinearLayout
     private lateinit var controlBar: LinearLayout
     private lateinit var errorPanel: LinearLayout
@@ -58,7 +62,10 @@ class MainActivity : Activity() {
     private var currentRoomId: Long = 0L
     private var destroyed = false
     private var qrPolling = false
-    private var followedRooms: List<FollowedLiveRoom> = emptyList()
+    private var homeMode: HomeMode = HomeMode.FOLLOW
+    private var visibleRooms: List<LiveRoomItem> = emptyList()
+    private var visibleAreas: List<LiveArea> = emptyList()
+    private var currentSearchKeyword: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,9 +96,12 @@ class MainActivity : Activity() {
         playerSurface = findViewById(R.id.playerSurface)
         loadingText = findViewById(R.id.loadingText)
         loginPanel = findViewById(R.id.loginPanel)
-        followPanel = findViewById(R.id.followPanel)
-        followList = findViewById(R.id.followList)
-        followEmptyText = findViewById(R.id.followEmptyText)
+        homePanel = findViewById(R.id.homePanel)
+        homeTitle = findViewById(R.id.homeTitle)
+        homeList = findViewById(R.id.homeList)
+        homeEmptyText = findViewById(R.id.homeEmptyText)
+        searchBar = findViewById(R.id.searchBar)
+        searchInput = findViewById(R.id.searchInput)
         roomPanel = findViewById(R.id.roomPanel)
         controlBar = findViewById(R.id.controlBar)
         errorPanel = findViewById(R.id.errorPanel)
@@ -137,16 +147,39 @@ class MainActivity : Activity() {
             livePlayer.stop()
             render(UiState.RoomEntry)
         }
-        findViewById<Button>(R.id.reloadFollowButton).setOnClickListener {
+        findViewById<Button>(R.id.followModeButton).setOnClickListener {
             loadFollowedLives()
         }
-        followList.setOnItemClickListener { _, _, position, _ ->
-            followedRooms.getOrNull(position)?.let { room ->
-                startPlayback(room.roomId)
+        findViewById<Button>(R.id.categoryModeButton).setOnClickListener {
+            loadLiveAreas()
+        }
+        findViewById<Button>(R.id.searchModeButton).setOnClickListener {
+            render(UiState.SearchResults(currentSearchKeyword, emptyList()))
+        }
+        findViewById<Button>(R.id.reloadHomeButton).setOnClickListener {
+            reloadHomeMode()
+        }
+        findViewById<Button>(R.id.searchSubmitButton).setOnClickListener {
+            val keyword = searchInput.text.toString().trim()
+            if (keyword.isBlank()) {
+                render(UiState.SearchResults("", emptyList()))
+            } else {
+                searchLiveRooms(keyword)
+            }
+        }
+        homeList.setOnItemClickListener { _, _, position, _ ->
+            if (visibleAreas.isNotEmpty()) {
+                visibleAreas.getOrNull(position)?.let { area ->
+                    loadAreaLiveRooms(area)
+                }
+            } else {
+                visibleRooms.getOrNull(position)?.let { room ->
+                    startPlayback(room.roomId)
+                }
             }
         }
         retryButton.setOnClickListener {
-            if (currentRoomId > 0L) startPlayback(currentRoomId) else loadFollowedLives()
+            if (currentRoomId > 0L) startPlayback(currentRoomId) else reloadHomeMode()
         }
         val controlClick = View.OnClickListener {
             if (currentRoomId > 0L) showControlsTemporarily()
@@ -279,6 +312,7 @@ class MainActivity : Activity() {
         playbackRequestGate.nextRequest()
         livePlayer.stop()
         currentRoomId = 0L
+        homeMode = HomeMode.FOLLOW
         render(UiState.Loading)
         Thread {
             try {
@@ -289,6 +323,7 @@ class MainActivity : Activity() {
                     return@Thread
                 }
                 val rooms = apiClient.getFollowedLiveRooms()
+                    .map { LiveRoomItem(roomId = it.roomId, uname = it.uname, title = it.title) }
                 runOnUiThread { render(UiState.FollowedLives(rooms)) }
             } catch (error: Throwable) {
                 runOnUiThread {
@@ -298,11 +333,78 @@ class MainActivity : Activity() {
         }.start()
     }
 
+    private fun loadLiveAreas() {
+        qrPolling = false
+        playbackRequestGate.nextRequest()
+        livePlayer.stop()
+        currentRoomId = 0L
+        homeMode = HomeMode.CATEGORY
+        render(UiState.Loading)
+        Thread {
+            try {
+                val areas = apiClient.getLiveAreas()
+                runOnUiThread { render(UiState.LiveAreas(areas)) }
+            } catch (error: Throwable) {
+                runOnUiThread { render(UiState.Error("分类加载失败：${error.message}", true)) }
+            }
+        }.start()
+    }
+
+    private fun loadAreaLiveRooms(area: LiveArea) {
+        qrPolling = false
+        playbackRequestGate.nextRequest()
+        livePlayer.stop()
+        currentRoomId = 0L
+        homeMode = HomeMode.CATEGORY
+        render(UiState.Loading)
+        Thread {
+            try {
+                val rooms = apiClient.getAreaLiveRooms(area)
+                runOnUiThread { render(UiState.AreaLiveRooms(area.displayName, rooms)) }
+            } catch (error: Throwable) {
+                runOnUiThread { render(UiState.Error("分类直播加载失败：${error.message}", true)) }
+            }
+        }.start()
+    }
+
+    private fun searchLiveRooms(keyword: String) {
+        qrPolling = false
+        playbackRequestGate.nextRequest()
+        livePlayer.stop()
+        currentRoomId = 0L
+        homeMode = HomeMode.SEARCH
+        currentSearchKeyword = keyword
+        render(UiState.Loading)
+        Thread {
+            try {
+                val rooms = apiClient.searchLiveRooms(keyword)
+                runOnUiThread { render(UiState.SearchResults(keyword, rooms)) }
+            } catch (error: Throwable) {
+                runOnUiThread { render(UiState.Error("搜索失败：${error.message}", true)) }
+            }
+        }.start()
+    }
+
+    private fun reloadHomeMode() {
+        when (homeMode) {
+            HomeMode.FOLLOW -> loadFollowedLives()
+            HomeMode.CATEGORY -> loadLiveAreas()
+            HomeMode.SEARCH -> {
+                val keyword = searchInput.text.toString().trim().ifBlank { currentSearchKeyword }
+                if (keyword.isBlank()) {
+                    render(UiState.SearchResults("", emptyList()))
+                } else {
+                    searchLiveRooms(keyword)
+                }
+            }
+        }
+    }
+
     private fun render(state: UiState) {
         hideSystemUi()
         loadingText.visibility = View.GONE
         loginPanel.visibility = View.GONE
-        followPanel.visibility = View.GONE
+        homePanel.visibility = View.GONE
         roomPanel.visibility = View.GONE
         controlBar.visibility = View.GONE
         errorPanel.visibility = View.GONE
@@ -315,19 +417,22 @@ class MainActivity : Activity() {
                 loginStatus.text = "请使用 Bilibili 手机客户端扫码登录"
             }
             is UiState.FollowedLives -> {
-                followedRooms = state.rooms
-                followPanel.visibility = View.VISIBLE
-                followEmptyText.visibility = if (state.rooms.isEmpty()) View.VISIBLE else View.GONE
-                followList.visibility = if (state.rooms.isEmpty()) View.GONE else View.VISIBLE
-                followList.adapter = SimpleAdapter(
-                    this,
-                    state.rooms.map {
-                        mapOf("uname" to it.uname, "title" to it.title)
-                    },
-                    R.layout.item_follow_live,
-                    arrayOf("uname", "title"),
-                    intArrayOf(android.R.id.text1, android.R.id.text2)
-                )
+                homeMode = HomeMode.FOLLOW
+                renderRoomList("关注直播", "暂无正在直播的关注主播", state.rooms, showSearch = false)
+            }
+            is UiState.LiveAreas -> {
+                homeMode = HomeMode.CATEGORY
+                renderAreaList(state.areas)
+            }
+            is UiState.AreaLiveRooms -> {
+                homeMode = HomeMode.CATEGORY
+                renderRoomList(state.title, "该分类暂无直播", state.rooms, showSearch = false)
+            }
+            is UiState.SearchResults -> {
+                homeMode = HomeMode.SEARCH
+                currentSearchKeyword = state.keyword
+                searchInput.setText(state.keyword)
+                renderRoomList("搜索直播", if (state.keyword.isBlank()) "请输入关键词搜索直播" else "没有搜索结果", state.rooms, showSearch = true)
             }
             UiState.RoomEntry -> roomPanel.visibility = View.VISIBLE
             is UiState.Playing -> {
@@ -340,6 +445,42 @@ class MainActivity : Activity() {
                 retryButton.visibility = if (state.canRetry) View.VISIBLE else View.GONE
             }
         }
+    }
+
+    private fun renderRoomList(title: String, emptyText: String, rooms: List<LiveRoomItem>, showSearch: Boolean) {
+        visibleRooms = rooms
+        visibleAreas = emptyList()
+        homePanel.visibility = View.VISIBLE
+        homeTitle.text = title
+        searchBar.visibility = if (showSearch) View.VISIBLE else View.GONE
+        homeEmptyText.text = emptyText
+        homeEmptyText.visibility = if (rooms.isEmpty()) View.VISIBLE else View.GONE
+        homeList.visibility = if (rooms.isEmpty()) View.GONE else View.VISIBLE
+        homeList.adapter = SimpleAdapter(
+            this,
+            rooms.map { mapOf("uname" to it.uname, "title" to it.title) },
+            R.layout.item_follow_live,
+            arrayOf("uname", "title"),
+            intArrayOf(android.R.id.text1, android.R.id.text2)
+        )
+    }
+
+    private fun renderAreaList(areas: List<LiveArea>) {
+        visibleAreas = areas
+        visibleRooms = emptyList()
+        homePanel.visibility = View.VISIBLE
+        homeTitle.text = "直播分类"
+        searchBar.visibility = View.GONE
+        homeEmptyText.text = "分类加载为空"
+        homeEmptyText.visibility = if (areas.isEmpty()) View.VISIBLE else View.GONE
+        homeList.visibility = if (areas.isEmpty()) View.GONE else View.VISIBLE
+        homeList.adapter = SimpleAdapter(
+            this,
+            areas.map { mapOf("uname" to it.parentName, "title" to it.areaName) },
+            R.layout.item_follow_live,
+            arrayOf("uname", "title"),
+            intArrayOf(android.R.id.text1, android.R.id.text2)
+        )
     }
 
     private fun showControlsTemporarily() {
@@ -373,5 +514,11 @@ class MainActivity : Activity() {
         private const val QR_SIZE = 180
         private const val QR_POLL_INTERVAL_MS = 1800L
         private const val CONTROL_AUTO_HIDE_MS = 5000L
+    }
+
+    private enum class HomeMode {
+        FOLLOW,
+        CATEGORY,
+        SEARCH
     }
 }

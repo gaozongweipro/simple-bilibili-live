@@ -149,4 +149,101 @@ class BiliApiClientTest {
         assertEquals(404L, rooms.first().roomId)
         assertEquals("主播 D", rooms.first().uname)
     }
+
+    @Test
+    fun parsesLiveAreasFromAreaListResponse() {
+        val json = """
+            {
+              "code": 0,
+              "data": {
+                "data": [
+                  {
+                    "id": 1,
+                    "name": "网游",
+                    "list": [
+                      { "id": 11, "name": "英雄联盟" },
+                      { "id": 12, "name": "DOTA2" }
+                    ]
+                  },
+                  {
+                    "id": 2,
+                    "name": "手游",
+                    "list": [
+                      { "id": 21, "name": "王者荣耀" }
+                    ]
+                  }
+                ]
+              }
+            }
+        """.trimIndent()
+
+        val areas = BiliApiClient.parseLiveAreas(json)
+
+        assertEquals(3, areas.size)
+        assertEquals(1L, areas[0].parentId)
+        assertEquals(11L, areas[0].areaId)
+        assertEquals("网游 / 英雄联盟", areas[0].displayName)
+        assertEquals(21L, areas[2].areaId)
+    }
+
+    @Test
+    fun parsesAreaLiveRoomsFromRoomListResponse() {
+        val json = """
+            {
+              "code": 0,
+              "data": {
+                "list": [
+                  {
+                    "roomid": 501,
+                    "title": "分类直播间",
+                    "uname": "分类主播",
+                    "live_status": 1
+                  }
+                ]
+              }
+            }
+        """.trimIndent()
+
+        val rooms = BiliApiClient.parseLiveRoomItems(json)
+
+        assertEquals(1, rooms.size)
+        assertEquals(501L, rooms.first().roomId)
+        assertEquals("分类主播", rooms.first().uname)
+        assertEquals("分类直播间", rooms.first().title)
+    }
+
+    @Test
+    fun parsesSearchLiveRoomsFromSearchResponse() {
+        val json = """
+            {
+              "code": 0,
+              "data": {
+                "result": {
+                  "live_room": [
+                    {
+                      "roomid": 601,
+                      "title": "搜索直播间",
+                      "uname": "搜索主播",
+                      "live_status": 1
+                    },
+                    {
+                      "room_id": 602,
+                      "title": "另一个结果",
+                      "name": "搜索主播2",
+                      "live_status": 1
+                    }
+                  ]
+                }
+              }
+            }
+        """.trimIndent()
+
+        val rooms = BiliApiClient.parseSearchLiveRooms(json)
+
+        assertEquals(2, rooms.size)
+        assertEquals(601L, rooms[0].roomId)
+        assertEquals("搜索主播", rooms[0].uname)
+        assertEquals(602L, rooms[1].roomId)
+        assertEquals("搜索主播2", rooms[1].uname)
+    }
 }

@@ -47,6 +47,36 @@ class BiliApiClient(
         return parseFollowedLiveRooms(body)
     }
 
+    fun getLiveAreas(): List<LiveArea> {
+        val body = execute("https://api.live.bilibili.com/room/v1/Area/getList")
+        return parseLiveAreas(body)
+    }
+
+    fun getAreaLiveRooms(area: LiveArea): List<LiveRoomItem> {
+        val url = "https://api.live.bilibili.com/xlive/web-interface/v1/second/getList"
+            .toHttpUrl()
+            .newBuilder()
+            .addQueryParameter("platform", "web")
+            .addQueryParameter("parent_area_id", area.parentId.toString())
+            .addQueryParameter("area_id", area.areaId.toString())
+            .addQueryParameter("sort_type", "online")
+            .addQueryParameter("page", "1")
+            .build()
+        val body = execute(url.toString())
+        return parseLiveRoomItems(body)
+    }
+
+    fun searchLiveRooms(keyword: String): List<LiveRoomItem> {
+        val url = "https://api.bilibili.com/x/web-interface/search/type"
+            .toHttpUrl()
+            .newBuilder()
+            .addQueryParameter("search_type", "live")
+            .addQueryParameter("keyword", keyword)
+            .build()
+        val body = execute(url.toString())
+        return parseSearchLiveRooms(body)
+    }
+
     private fun execute(url: String): String {
         val requestBuilder = Request.Builder()
             .url(url)
@@ -114,6 +144,12 @@ class BiliApiClient(
         }
 
         fun parseFollowedLiveRooms(json: String): List<FollowedLiveRoom> {
+            return parseLiveRoomItems(json).map {
+                FollowedLiveRoom(roomId = it.roomId, uname = it.uname, title = it.title)
+            }
+        }
+
+        fun parseLiveRoomItems(json: String): List<LiveRoomItem> {
             val root = JSONObject(json)
             if (root.optInt("code", -1) != 0) return emptyList()
             val data = root.optJSONObject("data") ?: return emptyList()
@@ -121,23 +157,83 @@ class BiliApiClient(
                 ?: data.optJSONArray("list")
                 ?: data.optJSONArray("items")
                 ?: return emptyList()
-            val result = mutableListOf<FollowedLiveRoom>()
+            return parseLiveRoomItemArray(rooms, onlyLive = true)
+        }
+
+        fun parseLiveAreas(json: String): List<LiveArea> {
+            val root = JSONObject(json)
+            if (root.optInt("code", -1) != 0) return emptyList()
+            val data = root.optJSONObject("data") ?: return emptyList()
+            val parentAreas = data.optJSONArray("data")
+                ?: data.optJSONArray("list")
+                ?: data.optJSONArray("areas")
+                ?: return emptyList()
+            val result = mutableListOf<LiveArea>()
+            for (parentIndex in 0 until parentAreas.length()) {
+                val parent = parentAreas.optJSONObject(parentIndex) ?: continue
+                val parentId = parent.optLong("id", parent.optLong("parent_id", 0L))
+                val parentName = parent.optString("name", parent.optString("parent_name", "分区"))
+                val children = parent.optJSONArray("list")
+                    ?: parent.optJSONArray("children")
+                    ?: continue
+                for (childIndex in 0 until children.length()) {
+                    val child = children.optJSONObject(childIndex) ?: continue
+                    val areaId = child.optLong("id", child.optLong("area_id", 0L))
+                    if (parentId <= 0L || areaId <= 0L) continue
+                    result += LiveArea(
+                        parentId = parentId,
+                        areaId = areaId,
+                        parentName = parentName,
+                        areaName = child.optString("name", child.optString("area_name", "子分区"))
+                    )
+                }
+            }
+            return result
+        }
+
+        fun parseSearchLiveRooms(json: String): List<LiveRoomItem> {
+            val root = JSONObject(json)
+            if (root.optInt("code", -1) != 0) return emptyList()
+            val data = root.optJSONObject("data") ?: return emptyList()
+            val resultObject = data.optJSONObject("result")
+            val rooms = resultObject?.optJSONArray("live_room")
+                ?: resultObject?.optJSONArray("room")
+                ?: data.optJSONArray("result")
+                ?: data.optJSONArray("list")
+                ?: return emptyList()
+            return parseLiveRoomItemArray(rooms, onlyLive = false)
+        }
+
+        private fun parseLiveRoomItemArray(rooms: org.json.JSONArray, onlyLive: Boolean): List<LiveRoomItem> {
+            val result = mutableListOf<LiveRoomItem>()
             for (index in 0 until rooms.length()) {
                 val item = rooms.optJSONObject(index) ?: continue
-                if (item.optInt("live_status", 1) != 1) continue
-                val roomId = when {
-                    item.optLong("roomid", 0L) > 0L -> item.optLong("roomid")
-                    item.optLong("room_id", 0L) > 0L -> item.optLong("room_id")
-                    else -> 0L
-                }
+                if (onlyLive && item.optInt("live_status", 1) != 1) continue
+                val roomId = extractRoomId(item)
                 if (roomId <= 0L) continue
-                result += FollowedLiveRoom(
+                result += LiveRoomItem(
                     roomId = roomId,
                     uname = item.optString("uname", item.optString("name", "未命名主播")),
-                    title = item.optString("title", "直播中")
+                    title = cleanTitle(item.optString("title", "直播中"))
                 )
             }
             return result
+        }
+
+        private fun extractRoomId(item: JSONObject): Long {
+            return when {
+                item.optLong("roomid", 0L) > 0L -> item.optLong("roomid")
+                item.optLong("room_id", 0L) > 0L -> item.optLong("room_id")
+                item.optLong("roomid_str", 0L) > 0L -> item.optLong("roomid_str")
+                else -> 0L
+            }
+        }
+
+        private fun cleanTitle(value: String): String {
+            return value
+                .replace("<em class=\"keyword\">", "")
+                .replace("</em>", "")
+                .ifBlank { "直播中" }
         }
     }
 }
