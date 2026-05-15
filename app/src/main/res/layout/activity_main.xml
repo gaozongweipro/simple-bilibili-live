@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_player">
+
+    <com.simplebilibili.live.player.AspectRatioSurfaceView
+        android:id="@+id/playerSurface"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center" />
+
+    <TextView
+        android:id="@+id/loadingText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="正在加载..."
+        android:textColor="@color/text_secondary"
+        android:textSize="18sp"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/loginPanel"
+        android:layout_width="360dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/qrImage"
+            android:layout_width="180dp"
+            android:layout_height="180dp"
+            android:background="#FFFFFF"
+            android:contentDescription="Bilibili 登录二维码" />
+
+        <TextView
+            android:id="@+id/loginStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:gravity="center"
+            android:textColor="@color/text_primary"
+            android:textSize="18sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/followPanel"
+        android:layout_width="620dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="关注直播"
+                android:textColor="@color/text_primary"
+                android:textSize="22sp" />
+
+            <Button
+                android:id="@+id/manualRoomButton"
+                android:layout_width="112dp"
+                android:layout_height="44dp"
+                android:text="房间号" />
+
+            <Button
+                android:id="@+id/reloadFollowButton"
+                android:layout_width="88dp"
+                android:layout_height="44dp"
+                android:layout_marginLeft="8dp"
+                android:text="刷新" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/followEmptyText"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="暂无正在直播的关注主播"
+            android:textColor="@color/text_secondary"
+            android:textSize="18sp"
+            android:visibility="gone" />
+
+        <ListView
+            android:id="@+id/followList"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="8dp"
+            android:layout_weight="1"
+            android:cacheColorHint="@android:color/transparent"
+            android:divider="#303742"
+            android:dividerHeight="1dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/roomPanel"
+        android:layout_width="360dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="@color/panel_dark"
+        android:orientation="vertical"
+        android:padding="18dp"
+        android:visibility="gone">
+
+        <EditText
+            android:id="@+id/roomInput"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="输入直播间号"
+            android:inputType="number"
+            android:singleLine="true"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_secondary"
+            android:textSize="18sp" />
+
+        <Button
+            android:id="@+id/startButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="12dp"
+            android:text="进入直播间"
+            android:textSize="18sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/controlBar"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_gravity="bottom"
+        android:background="#AA000000"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:visibility="gone">
+
+        <Button
+            android:id="@+id/backButton"
+            android:layout_width="88dp"
+            android:layout_height="44dp"
+            android:text="返回" />
+
+        <TextView
+            android:id="@+id/roomTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="12dp"
+            android:layout_marginRight="12dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:textColor="@color/text_primary"
+            android:textSize="17sp" />
+
+        <Button
+            android:id="@+id/refreshButton"
+            android:layout_width="88dp"
+            android:layout_height="44dp"
+            android:text="刷新" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/errorPanel"
+        android:layout_width="420dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="@color/panel_dark"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="18dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/errorMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="@color/text_primary"
+            android:textSize="18sp" />
+
+        <Button
+            android:id="@+id/retryButton"
+            android:layout_width="160dp"
+            android:layout_height="44dp"
+            android:layout_marginTop="12dp"
+            android:text="重试" />
+    </LinearLayout>
+</FrameLayout>

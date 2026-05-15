@@ -1,0 +1,7 @@
+<resources>
+    <color name="bg_player">#080A0E</color>
+    <color name="panel_dark">#20242B</color>
+    <color name="text_primary">#F5F7FA</color>
+    <color name="text_secondary">#AAB2BD</color>
+    <color name="accent">#00A1D6</color>
+</resources>
