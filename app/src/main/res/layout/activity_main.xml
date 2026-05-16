@@ -29,7 +29,7 @@
         android:layout_gravity="center"
         android:gravity="center"
         android:orientation="vertical"
-        android:padding="20dp"
+        android:padding="32dp"
         android:visibility="gone">
 
         <ImageView
@@ -51,36 +51,41 @@
 
     <LinearLayout
         android:id="@+id/homePanel"
-        android:layout_width="620dp"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center"
+        android:layout_marginLeft="56dp"
+        android:layout_marginRight="56dp"
         android:orientation="vertical"
-        android:padding="16dp"
+        android:paddingLeft="32dp"
+        android:paddingTop="32dp"
+        android:paddingRight="32dp"
+        android:paddingBottom="28dp"
         android:visibility="gone">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="52dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
             <Button
                 android:id="@+id/followModeButton"
                 android:layout_width="82dp"
-                android:layout_height="44dp"
+                android:layout_height="48dp"
                 android:text="关注" />
 
             <Button
                 android:id="@+id/categoryModeButton"
                 android:layout_width="82dp"
-                android:layout_height="44dp"
+                android:layout_height="48dp"
                 android:layout_marginLeft="8dp"
                 android:text="分类" />
 
             <Button
                 android:id="@+id/searchModeButton"
                 android:layout_width="82dp"
-                android:layout_height="44dp"
+                android:layout_height="48dp"
                 android:layout_marginLeft="8dp"
                 android:text="搜索" />
 
@@ -99,13 +104,13 @@
             <Button
                 android:id="@+id/manualRoomButton"
                 android:layout_width="112dp"
-                android:layout_height="44dp"
+                android:layout_height="48dp"
                 android:text="房间号" />
 
             <Button
                 android:id="@+id/reloadHomeButton"
                 android:layout_width="88dp"
-                android:layout_height="44dp"
+                android:layout_height="48dp"
                 android:layout_marginLeft="8dp"
                 android:text="刷新" />
         </LinearLayout>
@@ -113,7 +118,7 @@
         <LinearLayout
             android:id="@+id/searchBar"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="52dp"
             android:layout_marginTop="6dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
@@ -122,7 +127,7 @@
             <EditText
                 android:id="@+id/searchInput"
                 android:layout_width="0dp"
-                android:layout_height="44dp"
+                android:layout_height="48dp"
                 android:layout_weight="1"
                 android:hint="搜索直播间或主播"
                 android:singleLine="true"
@@ -133,7 +138,7 @@
             <Button
                 android:id="@+id/searchSubmitButton"
                 android:layout_width="88dp"
-                android:layout_height="44dp"
+                android:layout_height="48dp"
                 android:layout_marginLeft="8dp"
                 android:text="搜索" />
         </LinearLayout>
@@ -156,8 +161,11 @@
             android:layout_marginTop="8dp"
             android:layout_weight="1"
             android:cacheColorHint="@android:color/transparent"
+            android:clipToPadding="false"
             android:divider="#303742"
-            android:dividerHeight="1dp" />
+            android:dividerHeight="1dp"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp" />
     </LinearLayout>
 
     <LinearLayout
@@ -193,19 +201,22 @@
     <LinearLayout
         android:id="@+id/controlBar"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="60dp"
         android:layout_gravity="bottom"
+        android:layout_marginLeft="28dp"
+        android:layout_marginRight="28dp"
+        android:layout_marginBottom="24dp"
         android:background="#AA000000"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingLeft="12dp"
-        android:paddingRight="12dp"
+        android:paddingLeft="14dp"
+        android:paddingRight="14dp"
         android:visibility="gone">
 
         <Button
             android:id="@+id/backButton"
             android:layout_width="88dp"
-            android:layout_height="44dp"
+            android:layout_height="48dp"
             android:text="返回" />
 
         <TextView
@@ -223,7 +234,7 @@
         <Button
             android:id="@+id/refreshButton"
             android:layout_width="88dp"
-            android:layout_height="44dp"
+            android:layout_height="48dp"
             android:text="刷新" />
     </LinearLayout>
 

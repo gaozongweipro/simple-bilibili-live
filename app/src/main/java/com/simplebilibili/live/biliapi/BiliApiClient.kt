@@ -4,6 +4,7 @@ import com.simplebilibili.live.net.HttpClientFactory
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONArray
 import org.json.JSONObject
 
 class BiliApiClient(
@@ -53,17 +54,22 @@ class BiliApiClient(
     }
 
     fun getAreaLiveRooms(area: LiveArea): List<LiveRoomItem> {
-        val url = "https://api.live.bilibili.com/xlive/web-interface/v1/second/getList"
-            .toHttpUrl()
-            .newBuilder()
-            .addQueryParameter("platform", "web")
-            .addQueryParameter("parent_area_id", area.parentId.toString())
-            .addQueryParameter("area_id", area.areaId.toString())
-            .addQueryParameter("sort_type", "online")
-            .addQueryParameter("page", "1")
-            .build()
-        val body = execute(url.toString())
-        return parseLiveRoomItems(body)
+        val urls = listOf(
+            areaLiveRoomsUrl(area.parentId, area.areaId, "sort_type_${area.areaId}"),
+            areaLiveRoomsUrl(area.parentId, 0L, "sort_type_${area.areaId}"),
+            areaLiveRoomsUrl(area.parentId, area.areaId, "online")
+        )
+        var lastError: Throwable? = null
+        for (url in urls) {
+            try {
+                val rooms = parseLiveRoomItems(execute(url))
+                if (rooms.isNotEmpty()) return rooms
+            } catch (error: Throwable) {
+                lastError = error
+            }
+        }
+        lastError?.let { throw it }
+        return emptyList()
     }
 
     fun searchLiveRooms(keyword: String): List<LiveRoomItem> {
@@ -87,6 +93,20 @@ class BiliApiClient(
             if (!response.isSuccessful) error("Bilibili request failed: HTTP ${response.code}")
             return response.body?.string().orEmpty()
         }
+    }
+
+    private fun areaLiveRoomsUrl(parentAreaId: Long, areaId: Long, sortType: String): String {
+        return "https://api.live.bilibili.com/xlive/web-interface/v1/second/getList"
+            .toHttpUrl()
+            .newBuilder()
+            .addQueryParameter("platform", "web")
+            .addQueryParameter("parent_area_id", parentAreaId.toString())
+            .addQueryParameter("area_id", areaId.toString())
+            .addQueryParameter("sort_type", sortType)
+            .addQueryParameter("page", "1")
+            .addQueryParameter("page_size", "20")
+            .build()
+            .toString()
     }
 
     companion object {
@@ -156,6 +176,9 @@ class BiliApiClient(
             val rooms = data.optJSONArray("rooms")
                 ?: data.optJSONArray("list")
                 ?: data.optJSONArray("items")
+                ?: data.optJSONObject("result")?.optJSONArray("list")
+                ?: data.optJSONObject("result")?.optJSONArray("live_room")
+                ?: data.optJSONObject("list")?.optJSONArray("data")
                 ?: return emptyList()
             return parseLiveRoomItemArray(rooms, onlyLive = true)
         }
@@ -163,11 +186,14 @@ class BiliApiClient(
         fun parseLiveAreas(json: String): List<LiveArea> {
             val root = JSONObject(json)
             if (root.optInt("code", -1) != 0) return emptyList()
-            val data = root.optJSONObject("data") ?: return emptyList()
-            val parentAreas = data.optJSONArray("data")
-                ?: data.optJSONArray("list")
-                ?: data.optJSONArray("areas")
-                ?: return emptyList()
+            val data = root.optJSONObject("data")
+            val parentAreas = if (data != null) {
+                data.optJSONArray("data")
+                    ?: data.optJSONArray("list")
+                    ?: data.optJSONArray("areas")
+            } else {
+                root.optJSONArray("data")
+            } ?: return emptyList()
             val result = mutableListOf<LiveArea>()
             for (parentIndex in 0 until parentAreas.length()) {
                 val parent = parentAreas.optJSONObject(parentIndex) ?: continue
@@ -175,7 +201,7 @@ class BiliApiClient(
                 val parentName = parent.optString("name", parent.optString("parent_name", "分区"))
                 val children = parent.optJSONArray("list")
                     ?: parent.optJSONArray("children")
-                    ?: continue
+                    ?: JSONArray().put(parent)
                 for (childIndex in 0 until children.length()) {
                     val child = children.optJSONObject(childIndex) ?: continue
                     val areaId = child.optLong("id", child.optLong("area_id", 0L))
@@ -225,6 +251,7 @@ class BiliApiClient(
                 item.optLong("roomid", 0L) > 0L -> item.optLong("roomid")
                 item.optLong("room_id", 0L) > 0L -> item.optLong("room_id")
                 item.optLong("roomid_str", 0L) > 0L -> item.optLong("roomid_str")
+                item.optLong("id", 0L) > 0L -> item.optLong("id")
                 else -> 0L
             }
         }

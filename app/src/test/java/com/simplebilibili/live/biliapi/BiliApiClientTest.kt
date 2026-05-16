@@ -187,6 +187,31 @@ class BiliApiClientTest {
     }
 
     @Test
+    fun parsesLiveAreasWhenDataIsArray() {
+        val json = """
+            {
+              "code": 0,
+              "data": [
+                {
+                  "id": 9,
+                  "name": "生活",
+                  "list": [
+                    { "id": 91, "name": "日常" }
+                  ]
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val areas = BiliApiClient.parseLiveAreas(json)
+
+        assertEquals(1, areas.size)
+        assertEquals(9L, areas.first().parentId)
+        assertEquals(91L, areas.first().areaId)
+        assertEquals("生活 / 日常", areas.first().displayName)
+    }
+
+    @Test
     fun parsesAreaLiveRoomsFromRoomListResponse() {
         val json = """
             {
@@ -210,6 +235,33 @@ class BiliApiClientTest {
         assertEquals(501L, rooms.first().roomId)
         assertEquals("分类主播", rooms.first().uname)
         assertEquals("分类直播间", rooms.first().title)
+    }
+
+    @Test
+    fun parsesAreaLiveRoomsFromNestedListResponse() {
+        val json = """
+            {
+              "code": 0,
+              "data": {
+                "list": {
+                  "data": [
+                    {
+                      "id": 701,
+                      "title": "嵌套分类直播间",
+                      "uname": "嵌套分类主播"
+                    }
+                  ]
+                }
+              }
+            }
+        """.trimIndent()
+
+        val rooms = BiliApiClient.parseLiveRoomItems(json)
+
+        assertEquals(1, rooms.size)
+        assertEquals(701L, rooms.first().roomId)
+        assertEquals("嵌套分类主播", rooms.first().uname)
+        assertEquals("嵌套分类直播间", rooms.first().title)
     }
 
     @Test

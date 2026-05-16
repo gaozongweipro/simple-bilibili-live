@@ -5,25 +5,45 @@
     android:viewportHeight="108">
 
     <path
+        android:fillColor="@color/ic_launcher_panel_shadow"
+        android:pathData="M28,22 L80,22 Q90,22 90,32 L90,84 Q90,94 80,94 L28,94 Q18,94 18,84 L18,32 Q18,22 28,22 Z" />
+
+    <path
         android:fillColor="@color/ic_launcher_panel"
-        android:pathData="M22,32 L86,32 Q92,32 92,38 L92,72 Q92,78 86,78 L22,78 Q16,78 16,72 L16,38 Q16,32 22,32 Z" />
+        android:pathData="M28,18 L80,18 Q90,18 90,28 L90,80 Q90,90 80,90 L28,90 Q18,90 18,80 L18,28 Q18,18 28,18 Z" />
 
     <path
-        android:fillColor="@color/ic_launcher_screen"
-        android:pathData="M28,40 L80,40 Q84,40 84,44 L84,66 Q84,70 80,70 L28,70 Q24,70 24,66 L24,44 Q24,40 28,40 Z" />
-
-    <path
-        android:fillColor="@color/ic_launcher_play"
-        android:pathData="M48,47 L48,63 L64,55 Z" />
-
-    <path
-        android:strokeColor="@color/ic_launcher_panel"
+        android:strokeColor="@color/ic_launcher_screen"
         android:strokeWidth="5"
         android:strokeLineCap="round"
         android:fillColor="@android:color/transparent"
-        android:pathData="M42,30 L34,22 M66,30 L74,22" />
+        android:pathData="M42,34 L35,27 M66,34 L73,27" />
+
+    <path
+        android:fillColor="@color/ic_launcher_screen"
+        android:pathData="M32,35 L76,35 Q83,35 83,42 L83,70 Q83,77 76,77 L32,77 Q25,77 25,70 L25,42 Q25,35 32,35 Z" />
 
     <path
         android:fillColor="@color/ic_launcher_panel"
-        android:pathData="M38,82 L70,82 Q73,82 73,85 Q73,88 70,88 L38,88 Q35,88 35,85 Q35,82 38,82 Z" />
+        android:pathData="M35,42 L73,42 Q78,42 78,47 L78,66 Q78,71 73,71 L35,71 Q30,71 30,66 L30,47 Q30,42 35,42 Z" />
+
+    <path
+        android:fillColor="@color/ic_launcher_screen"
+        android:pathData="M37,50 L41,50 L41,61 L47,61 L47,65 L37,65 Z" />
+
+    <path
+        android:fillColor="@color/ic_launcher_screen"
+        android:pathData="M50,50 L54,50 L54,65 L50,65 Z" />
+
+    <path
+        android:fillColor="@color/ic_launcher_screen"
+        android:pathData="M57,50 L61,50 L64,60 L67,50 L71,50 L66,65 L62,65 Z" />
+
+    <path
+        android:fillColor="@color/ic_launcher_screen"
+        android:pathData="M73,50 L81,50 L81,54 L77,54 L77,56 L81,56 L81,60 L77,60 L77,61 L81,61 L81,65 L73,65 Z" />
+
+    <path
+        android:fillColor="@color/ic_launcher_accent"
+        android:pathData="M35,47 Q37,47 37,49 Q37,51 35,51 Q33,51 33,49 Q33,47 35,47 Z M73,47 Q75,47 75,49 Q75,51 73,51 Q71,51 71,49 Q71,47 73,47 Z" />
 </vector>
